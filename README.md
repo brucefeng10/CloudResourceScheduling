@@ -10,7 +10,8 @@
 >* 混部集群时刻处于复杂的干扰环境中，所以我们需要满足一些规避干扰约束，一条规避干扰约束被描述为<APP_A, APP_B, k>，代表若一台宿主机上存在APP_A类型的实例，则最多能部署k个APP_B类型的实例。注意，k可能为0。APP_A和APP_B也可能代表同一个APP（e.g. <APP_A, APP_A, k>），代表同一台机器上最多可以部署的该APP的实例的数目.
 
 > 目标函数: (用整数规划的时候对该目标函数进行了线性转换，近似拟合)
->* ![]()
+>* ![](https://github.com/brucefeng10/CloudResourceScheduling/blob/master/resources/score-criteria.jpg)
+
 
 数据观察(a版)：  
 instance: 总共68219个，分为9338类，相同类的instance属性一样；  
