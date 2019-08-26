@@ -191,6 +191,7 @@ def sub(pi, res_pi, mach_res, raw_cost):
         subp = Model('sub problem')
         # y[i] denotes the number of order i in the new pattern
         y = subp.addVars(order_cnt, vtype=GRB.INTEGER, name='y')
+        # z[i] denotes whether order i is in the new pattern
         z = subp.addVars(order_cnt, vtype=GRB.BINARY, name='z')
 
         obj = raw_cost - res_pi - quicksum(
@@ -208,7 +209,7 @@ def sub(pi, res_pi, mach_res, raw_cost):
         subp.addConstr(quicksum(y[i] * app_res[i][4] for i in range(order_cnt)) <= mach_res[4])
         subp.addConstr(quicksum(y[i] * app_res[i][5] for i in range(order_cnt)) <= mach_res[5])
 
-        # interference constriant
+        # interference constraint
         for val in app_intf:
             app_a, app_b = val[0], val[1]
             if app_a >= order_cnt or app_b >= order_cnt:

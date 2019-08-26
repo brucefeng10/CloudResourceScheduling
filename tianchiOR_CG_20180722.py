@@ -76,7 +76,7 @@ def read_data_inst2():
 
 
 def read_data_app_inter():
-    app1_app2 = []  # constraint between two app
+    app1_app2 = []  # [app1, app2, interf_cnt] interference between two app
     app_app = []  # constraint of an app itself
     with open(input_file + 'scheduling_preliminary_app_interference_20180606.csv', 'rU') as fai:
         reader = csv.reader(fai)
@@ -155,7 +155,7 @@ def sche_rlmp(patt):
 
 
 def sche_subp(pi):
-    '''Using column generation to solve cutting stock problem -- sub-problem'''
+    """Using column generation to solve cutting stock problem -- sub-problem"""
     print('*******Start sub problem!********')
     new_pat = np.ones([app_num, 1])  # newly generated pattern in the sub-problem
     try:
@@ -222,14 +222,19 @@ if __name__ == '__main__':
 
     inst_num = 600
     machine_num = 150
-    app_num = 100
+    app_num = 1000
     print(app_num, machine_num)
 
     pattern0 = np.eye(app_num, app_num)
+    for i in range(app_num):
+        pattern0[i, i] = int(min(0.5 * machine_att[5000, 0]/max(cpu_t[i, :]), machine_att[5000, 1]/max(mem_t[i, :]),
+                             machine_att[5000, 2]/max(app_att[i, 0], 0.01), machine_att[5000, 3]/max(app_att[i, 1], 0.01),
+                             machine_att[5000, 4]/max(app_att[i, 2], 0.01), machine_att[5000, 5]/max(app_att[i, 3], 0.01)))
     pattern = pattern0
+    print('initial pattern: ', pattern0)
 
     stop_ind = True
-    max_itr = 1000
+    max_itr = 100
     rlmp_objval = []  # objective value of rlmp in each iteration
     itr = 0
     while itr < max_itr and stop_ind:
@@ -240,7 +245,7 @@ if __name__ == '__main__':
         for ii in range(app_num):
             prof += pi[ii] * new_pat[ii][0]
         print('checking parameter: ', 1 - prof)
-        if 1 - prof >= -1e-3:
+        if 1 - prof >= -1e-2:
             stop_ind = False
         else:
             pattern = np.concatenate((pattern, new_pat), axis=1)
@@ -261,4 +266,5 @@ if __name__ == '__main__':
 
     plt.plot(rlmp_objval)
     plt.show()
+
 
