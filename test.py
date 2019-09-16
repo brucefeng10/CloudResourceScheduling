@@ -1,5 +1,5 @@
 from gurobipy import *
-
+import time
 
 
 def lp():
@@ -7,7 +7,7 @@ def lp():
         mod = Model('lp')
         lp_vars = []
         for i in range(3):
-            lp_vars.append(mod.addVar(lb=0, vtype=GRB.CONTINUOUS, name='x_%s' % i))
+            lp_vars.append(mod.addVar(lb=0, vtype=GRB.INTEGER, name='x_%s' % i))
 
         lp_cons = []
         lp_cons.append(mod.addConstr(lp_vars[0] + lp_vars[1] + 2*lp_vars[2] >= 2, name='con0'))  #
@@ -22,8 +22,9 @@ def lp():
         # col.remove(lp_cons)
         mod.update()
         print(mod.getVars())
-        mod.remove(mod.getVars()[2])
+        # mod.remove(mod.getVars()[2])  # 删除变量（列）
         # mod.update()
+        mod.write("model.mps")  # write a model
         mod.optimize()
 
         print('Objective: ', mod.objVal)
@@ -37,5 +38,23 @@ def lp():
 
         print('Encountered an attribute error')
 
-lp()
+# lp()
+
+
+def read_model():
+    mod = read("model_1000.mps")
+    mip_var = mod.getVars()
+    # reset variable type, from INTEGER to CONTINUOUS
+    for i in range(mod.numVars):
+        mip_var[i].setAttr("VType", GRB.INTEGER)
+    mod.update()
+    mod.Params.MIPGap = 0.003
+    mod.optimize()
+    print('Objective: ', mod.objVal)
+    mod.printAttr('X')
+
+
+read_model()
+
+
 

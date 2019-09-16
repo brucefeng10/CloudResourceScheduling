@@ -87,6 +87,7 @@ def read_data_app_inter():
 
 def rmp_int():
     """Using column generation to solve initial mixed integer problem"""
+    t0 = time.time()
 
     machine_att = read_data_mach()
     app_att, cpu_t, mem_t, cpu_sort = read_data_app()
@@ -105,27 +106,31 @@ def rmp_int():
                                machine_att[5000, 4] / max(app_att[i, 2], 0.01),
                                machine_att[5000, 5] / max(app_att[i, 3], 0.01)))
     try:
-        rlmp = Model('mip-problem')
+        rmp = Model('mip-problem')
+        rmp.Params.OutputFlag = 0
         # y[j] denotes the number of pattern0[j] to be used
-        y = rlmp.addVars(app_num, lb=0, vtype=GRB.INTEGER, name='y')
+        y = rmp.addVars(app_num, lb=0, vtype=GRB.INTEGER, name='y')
 
         obj = quicksum(y[j] for j in range(app_num))
-        rlmp.setObjective(obj, GRB.MINIMIZE)
+        rmp.setObjective(obj, GRB.MINIMIZE)
 
         for i in range(app_num):
-            rlmp.addConstr(rmp_coeff[i] * y[i] >= len(app_inst['app_' + str(i + 1)]))
+            rmp.addConstr(rmp_coeff[i] * y[i] >= len(app_inst['app_' + str(i + 1)]))
 
-        rlmp.optimize()
+        rmp.optimize()
 
-        print('Objective: ', rlmp.objVal)
-        rlmp.printAttr('X')
+        print('Objective: ', rmp.objVal)
+        rmp.printAttr('X')
 
-        if rlmp.status == GRB.OPTIMAL:
+        if rmp.status == GRB.OPTIMAL:
             print('\n***   Successful! We have found the optimal cutting solution.   ***')
 
     except GurobiError as e:
         print('Error of master-problem reported: ')
         print(e)
+
+    t1 = time.time()
+    print('Total elapsed time: ', t1-t0)
 
 
 def col_gen():
@@ -144,12 +149,13 @@ def col_gen():
     app_inst = read_data_inst2()
     inst_num = 600
     machine_num = 150
-    app_num = 9338
+    app_num = 1500
     time_num = 98
+    max_cpu = 1.0
 
     rmp_coeff = [0.0] * app_num
     for i in range(app_num):
-        rmp_coeff[i] = int(min(0.5 * machine_att[5000, 0]/max(cpu_t[i, :]), machine_att[5000, 1]/max(mem_t[i, :]),
+        rmp_coeff[i] = int(min(max_cpu * machine_att[5000, 0]/max(cpu_t[i, :]), machine_att[5000, 1]/max(mem_t[i, :]),
                              machine_att[5000, 2]/max(app_att[i, 0], 0.01), machine_att[5000, 3]/max(app_att[i, 1], 0.01),
                              machine_att[5000, 4]/max(app_att[i, 2], 0.01), machine_att[5000, 5]/max(app_att[i, 3], 0.01)))
     try:
@@ -178,7 +184,7 @@ def col_gen():
             sub_vars.append(sub.addVar(lb=0.0, vtype=GRB.INTEGER, name="sub_" + str(i)))
 
         for t in range(time_num):
-            sub.addConstr(quicksum(cpu_t[k, t] * sub_vars[k] for k in range(app_num)) <= 0.5 * machine_att[5000, 0])
+            sub.addConstr(quicksum(cpu_t[k, t] * sub_vars[k] for k in range(app_num)) <= max_cpu * machine_att[5000, 0])
             sub.addConstr(quicksum(mem_t[k, t] * sub_vars[k] for k in range(app_num)) <= machine_att[5000, 1])
 
         sub.addConstr(quicksum(app_att[k, 0] * sub_vars[k] for k in range(app_num)) <= machine_att[5000, 2])
@@ -189,7 +195,7 @@ def col_gen():
 
         print('         *****Column Generation Iteration*****          \n')
 
-        max_itr = 100
+        max_itr = 3000
         itr = 0
         stop_ind = True
         rmp_objvals = []  # objective value of rmp in each iteration
@@ -219,23 +225,29 @@ def col_gen():
             else:
                 stop_ind = False
 
-            print('\n')
+            if itr % 100 == 0:
+                rmp.write("model.mps")  # write a model
 
+            print('\n')
+        t1 = time.time()
+        print('Iteration elapsed time: ', t1 - t0)
         print('         *****Column Generation Iteration End*****          \n')
         print('   ****************************************   ')
         print('   **********Get the final result**********   ')
         print('   ****************************************   ')
         rmp.update()
+        rmp.write("model.mps")  # write a model
         mip_var = rmp.getVars()
         for i in range(rmp.numVars):
             mip_var[i].setAttr("VType", GRB.INTEGER)
         # rmp.update()
         rmp.optimize()
         if rmp.status == GRB.OPTIMAL:
-            print("Best MIP Solution: ", rmp.objVal, " machines\n")
             var = rmp.getVars()
             for i in range(rmp.numVars):
                 print(var[i].varName, " = ", var[i].x)
+
+            print("Best MIP Solution: ", rmp.objVal, " machines\n")
 
         print('Total iteration: ', itr)
         t1 = time.time()
@@ -394,10 +406,10 @@ def col_gen_inference():
 
 
 if __name__ == '__main__':
-
+    # rmp_int()
     col_gen()
     # col_gen_inference()
-    # rmp_int()
+
 
 
 

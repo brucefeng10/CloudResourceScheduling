@@ -22,13 +22,16 @@
 >* 100个app，初始解用一个单位矩阵，使用一种类型的machine（大），迭代439次后子问题找不到reduced cost为负(<-1e-3)的列，原问题有整数解，总耗时1074s；实际上迭代次数达到100后，松弛主问题目标函数下降幅度就非常小了，下降曲线如下：  
 ![](https://github.com/brucefeng10/CloudResourceScheduling/blob/master/resources/cost_descend_100.png)
 >* 1000个app，初始解用一个单位矩阵，使用一种类型的machine（大），迭代555次（手动停止）reduced cost为-16，松弛主问题目标函数值从6844下降到4477（还在继续下降）
->* 1000个app，初始解用一个对角矩阵（每个machine使用率最大），使用一种类型的machine（大），迭代100次花了46s，reduced cost为-0.39，松弛主问题目标函数值从551下降到472，整数解为1205，下降曲线如下：
-![](https://github.com/brucefeng10/CloudResourceScheduling/blob/master/resources/cost_descend_100.png)
->* 1000个app，考虑亲和约束，初始解用一个对角矩阵（每个machine使用率最大），使用一种类型的machine（大），迭代100次花了239s，reduced cost为-0.41，整数解为1208；
->* 9338个app，初始解用一个对角矩阵（每个machine使用率最大），使用一种类型的machine（大），迭代100次花了3224s，reduced cost为-1.15，松弛主问题目标函数值从551下降到5303，整数解从13086减少到12491，下降曲线如下：
-![](https://github.com/brucefeng10/CloudResourceScheduling/blob/master/resources/app9338_itr100.png)
+>* 1000个app，初始解用一个对角矩阵（每个machine使用率最大0.5），使用一种类型的machine（大），迭代100次花了46s，reduced cost为-0.39，松弛主问题目标函数值从551下降到472，整数解为1205，下降曲线如下：
+![](https://github.com/brucefeng10/CloudResourceScheduling/blob/master/resources/cost_descend_1000.png)
+>* 1000个app，考虑亲和约束，初始解用一个对角矩阵（每个machine使用率最大0.5），使用一种类型的machine（大），迭代100次花了239s，reduced cost为-0.41，整数解为1208；
+>* 9338个app，初始解用一个对角矩阵（每个machine使用率最大0.5），使用一种类型的machine（大），迭代1000次花了20h，reduced cost为-0.47，松弛主问题目标函数值从5791下降到4752，整数解从13086减少到11722，下降曲线如下：
+![](https://github.com/brucefeng10/CloudResourceScheduling/blob/master/resources/app9338_itr1000.png)
 
 
 
 ## 发现：
 >* 有可能的话尽量选一个好一点的初始解，特别是大规模的问题，这样能更快得到好的解，会节省很多迭代时间；
+>* 接上一条，针对该问题，建议先用启发式算法找个稍微好一点的解作为列生成的初始迭代解；
+>* 此问题和cutting stock问题有个区别就是item非常多，但是每个item的需求量非常少，换句话说，列生成中生成的列使用率不高，即新生成的列在最终的整数解中只使用一次（相当于cutting stock中某个方案只切割一次），这意味着迭代次数会非常多。
+
